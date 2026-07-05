@@ -1,0 +1,54 @@
+from pathlib import Path
+
+from sentence_transformers import SentenceTransformer
+from qdrant_client import QdrantClient
+from qdrant_client.models import Distance, VectorParams, PointStruct
+
+
+COLLECTION_NAME = "localmind"
+chunk_size = 500
+
+
+def chunk_text(text: str, chunk_size: int = chunk_size):
+    """Chunk the text into smaller pieces."""
+    # Naive fixed-size chunking: slice the string every `chunk_size` characters.
+    # Doesn't respect sentence/paragraph boundaries yet - good enough to prove the pipeline works.
+    return [text[i:i + chunk_size] for i in range(0, len(text), chunk_size)]
+
+
+def main():
+    file_path = Path("data/sample.txt")
+    text = file_path.read_text()
+    chunks = chunk_text(text)
+
+    # Loads Qwen3-Embedding-0.6B (downloads it on first run) and converts
+    # each chunk of text into a 1024-dimensional vector.
+    model = SentenceTransformer("Qwen/Qwen3-Embedding-0.6B")
+    embeddings = model.encode(chunks)
+
+    # Connects to the Qdrant container we started via docker-compose (port 6333).
+    client = QdrantClient("http://localhost:6333")
+
+    # Only create the collection (Qdrant's version of a "table") if it doesn't exist yet -
+    # otherwise re-running this script would error trying to recreate it.
+    if not client.collection_exists(COLLECTION_NAME):
+        client.create_collection(
+            collection_name=COLLECTION_NAME,
+            # size must match the embedding model's output dimension (1024 here)
+            vectors_config=VectorParams(size=embeddings.shape[1], distance=Distance.COSINE),
+        )
+
+    # Build one "point" per chunk: its vector (for similarity search) plus a payload
+    # (the original text + source filename) so we can retrieve human-readable results later.
+    points = [
+        PointStruct(id=i, vector=embeddings[i].tolist(), payload={"text": chunks[i], "source": file_path.name})
+        for i in range(len(chunks))
+    ]
+
+    # Writes (or overwrites, since IDs are reused on rerun) all points into Qdrant in one call.
+    client.upsert(collection_name=COLLECTION_NAME, points=points)
+    print(f"Inserted {len(chunks)} chunks from {file_path.name}")
+
+
+if __name__ == "__main__":
+    main()
