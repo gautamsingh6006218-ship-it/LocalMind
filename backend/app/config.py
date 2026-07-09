@@ -19,4 +19,4 @@ RAGAS_JUDGE_MODEL = os.getenv("RAGAS_JUDGE_MODEL", "qwen2.5:7b")
 OLLAMA_OPENAI_BASE_URL = os.getenv("OLLAMA_OPENAI_BASE_URL", "http://localhost:11434/v1")
 
 # fraction of chat requests that get RAGAS-scored, to reduce Ollama resource contention
-RAGAS_SAMPLE_RATE = float(os.getenv("RAGAS_SAMPLE_RATE", "0.33"))
+RAGAS_SAMPLE_RATE = float(os.getenv("RAGAS_SAMPLE_RATE", "1.0"))
