@@ -1,10 +1,10 @@
 from pathlib import Path
 
-from sentence_transformers import SentenceTransformer
+from app.embeddings.embedder import embed_texts
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
-from app.config import QDRANT_URL, QDRANT_COLLECTION, EMBEDDING_MODEL
+from app.config import QDRANT_URL, QDRANT_COLLECTION
 
 chunk_size = 500
 
@@ -23,8 +23,8 @@ def main():
 
     # Loads the configured embedding model (downloads it on first run) and converts
     # each chunk of text into a vector.
-    model = SentenceTransformer(EMBEDDING_MODEL)
-    embeddings = model.encode(chunks)
+
+    embeddings = embed_texts(chunks)
 
     # Connects to the Qdrant container we started via docker-compose.
     client = QdrantClient(QDRANT_URL)
@@ -35,13 +35,13 @@ def main():
         client.create_collection(
             collection_name=QDRANT_COLLECTION,
             # size must match the embedding model's output dimension (1024 here)
-            vectors_config=VectorParams(size=embeddings.shape[1], distance=Distance.COSINE),
+            vectors_config=VectorParams(size=len(embeddings[0]), distance=Distance.COSINE),
         )
 
     # Build one "point" per chunk: its vector (for similarity search) plus a payload
     # (the original text + source filename) so we can retrieve human-readable results later.
     points = [
-        PointStruct(id=i, vector=embeddings[i].tolist(), payload={"text": chunks[i], "source": file_path.name})
+        PointStruct(id=i, vector=embeddings[i], payload={"text": chunks[i], "source": file_path.name})
         for i in range(len(chunks))
     ]
 

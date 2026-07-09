@@ -12,6 +12,11 @@ QDRANT_COLLECTION = os.getenv("QDRANT_COLLECTION", "localmind")
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "Qwen/Qwen3-Embedding-0.6B")
 
 # bigger model used only to judge answer quality
-RAGAS_JUDGE_MODEL = os.getenv("RAGAS_JUDGE_MODEL", "llama3.1:8b")
+# RAGAS_JUDGE_MODEL = os.getenv("RAGAS_JUDGE_MODEL", "llama3.1:8b")
+RAGAS_JUDGE_MODEL = os.getenv("RAGAS_JUDGE_MODEL", "qwen2.5:7b")
+
 # Ollama's OpenAI-compatible endpoint
 OLLAMA_OPENAI_BASE_URL = os.getenv("OLLAMA_OPENAI_BASE_URL", "http://localhost:11434/v1")
+
+# fraction of chat requests that get RAGAS-scored, to reduce Ollama resource contention
+RAGAS_SAMPLE_RATE = float(os.getenv("RAGAS_SAMPLE_RATE", "0.33"))

@@ -1,3 +1,5 @@
+import random
+
 from fastapi import APIRouter, BackgroundTasks
 from pydantic import BaseModel
 from langfuse import observe, get_client
@@ -5,6 +7,7 @@ from app.embeddings.embedder import embed_text
 from app.llm.ollama_client import generate_answer
 from app.retrieval.retriever import search
 from app.eval.ragas_eval import score_faithfulness
+from app.config import RAGAS_SAMPLE_RATE
 
 # groups all routes defined in this file
 router = APIRouter()
@@ -59,8 +62,10 @@ def chat(request: ChatRequest, background_tasks: BackgroundTasks) -> ChatRespons
 
     # captures the trace ID now, while it's still active
     trace_id = get_client().get_current_trace_id()
-    # schedules scoring to run after the response is sent, not blocking the user
-    background_tasks.add_task(_score_and_log, trace_id, request.question, context_texts, answer)
+    # only scores a fraction of requests, to reduce Ollama resource contention
+    if random.random() < RAGAS_SAMPLE_RATE:
+        # schedules scoring to run after the response is sent, not blocking the user
+        background_tasks.add_task(_score_and_log, trace_id, request.question, context_texts, answer)
 
     # sends the answer back to the client
     return ChatResponse(answer=answer)

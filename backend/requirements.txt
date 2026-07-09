@@ -6,7 +6,9 @@ tiktoken
 fastapi
 uvicorn
 pytest
+pytest-asyncio
 langfuse
 python-dotenv
-ragas==0.3.9
+ragas==0.4.3
 langchain-ollama
+openai

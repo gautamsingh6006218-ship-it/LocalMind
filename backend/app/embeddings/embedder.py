@@ -14,3 +14,7 @@ def embed_text(text: str) -> list[float]:
     # .tolist() converts the NumPy array output into a plain Python list, since
     # that's the format needed to serialize this vector into a JSON request later.
     return _model.encode(text).tolist()
+
+def embed_texts(texts: list[str]) -> list[list[float]]:
+    """Embeds multiple texts at once - more efficient than calling embed_text() in a loop."""
+    return _model.encode(texts).tolist()
