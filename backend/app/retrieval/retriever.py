@@ -1,4 +1,5 @@
 from qdrant_client import QdrantClient
+from langfuse import observe
 
 COLLECTION_NAME = "localmind"
 
@@ -6,7 +7,7 @@ COLLECTION_NAME = "localmind"
 # embedding model: setting up a fresh connection on every request is wasteful.
 _client = QdrantClient("http://localhost:6333")
 
-
+@observe()
 def search(query_vector: list[float], limit: int = 3) -> list[dict]:
     """Find the `limit` chunks most similar to query_vector."""
     # Sends query_vector to Qdrant, which compares it against all stored vectors

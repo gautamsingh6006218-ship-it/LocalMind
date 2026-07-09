@@ -1,6 +1,7 @@
 import ollama
+from langfuse import observe
 
-
+@observe()
 def generate_answer(question: str, context: str) -> str:
     """Ask the local Llama model to answer `question`, grounded only in `context`."""
     # Explicitly instructing the model to answer using only the given context -

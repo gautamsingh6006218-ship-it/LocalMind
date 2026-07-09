@@ -1,3 +1,6 @@
+from dotenv import load_dotenv
+load_dotenv()  # Load environment variables from .env file
+
 from fastapi import FastAPI
 from app.api.chat import router as chat_router
 
