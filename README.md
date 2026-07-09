@@ -83,3 +83,49 @@ pytest -v
 ## Configuration
 
 All tunable settings (model names, judge model, sample rate for RAGAS scoring, etc.) live in `backend/app/config.py`, and can be overridden via `backend/.env` without touching code. See that file for the full list.
+
+## Ports used by this project
+
+| Port | Service |
+|---|---|
+| 5173 | Frontend (React dev server) |
+| 8000 | Backend (FastAPI) |
+| 3000 | Langfuse web dashboard |
+| 3030 | Langfuse worker |
+| 6333 | Qdrant |
+| 11434 | Ollama |
+| 5432 | Postgres |
+| 6379 | Redis |
+| 8123, 9000 | ClickHouse |
+| 9090, 9091 | MinIO |
+
+**Stop the whole infra stack** (all 8 containers/ports above at once, data is preserved):
+```
+docker compose -f infra/docker-compose.yml stop
+```
+**Start it back up:**
+```
+docker compose -f infra/docker-compose.yml up -d
+```
+
+## Troubleshooting
+
+**Check what's running on a port** (swap the number for any port above):
+```
+lsof -i :3000
+```
+
+**Stop whatever's using it:**
+```
+kill -9 $(lsof -t -i:3000)
+```
+
+**Check which Ollama model is currently loaded in memory:**
+```
+docker exec infra-ollama-1 ollama ps
+```
+
+**Check Docker's resource usage** (useful if requests are running slower than expected):
+```
+docker stats infra-ollama-1 --no-stream
+```

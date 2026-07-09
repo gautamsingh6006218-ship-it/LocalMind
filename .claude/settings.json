@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "Bash(pkill -f \"uvicorn app.main:app\")",
-      "Bash(pkill -f \"vite\")"
+      "Bash(pkill -f \"vite\")",
+      "Bash(ls -la /Users/gautamsingh/.docker/run/docker.sock 2>&1; echo \"---vm backend check---\"; ps aux | grep -i \"com.docker.backend\\\\|Docker.app.*vm\\\\|virtualization\" | grep -v grep)",
+      "Read(//Users/gautamsingh/.docker/run/**)"
     ]
   }
 }
