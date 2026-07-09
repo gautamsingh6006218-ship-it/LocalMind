@@ -3,3 +3,5 @@ qdrant-client
 pymupdf
 ollama
 tiktoken
+fastapi
+uvicorn
