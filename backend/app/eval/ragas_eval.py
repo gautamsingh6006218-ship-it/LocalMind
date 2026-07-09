@@ -1,21 +1,39 @@
-from ragas import SingleTurnSample
-from ragas.metrics import Faithfulness
-from ragas.llms import LangchainLLMWrapper
-from langchain_ollama import ChatOllama
+import sys
+import types
 
-from app.config import OLLAMA_MODEL
+# creates an empty fake module
+_stub = types.ModuleType("langchain_community.chat_models.vertexai")
+# adds an empty placeholder class into it
+_stub.ChatVertexAI = type("ChatVertexAI", (), {})
+# registers the fake module so ragas's broken import finds it
+sys.modules["langchain_community.chat_models.vertexai"] = _stub
 
-# Wraps our local Ollama model in RAGAS's expected LangChain interface -
-# this is what keeps RAGAS's scoring fully offline instead of defaulting to OpenAI.
-_judge_llm = LangchainLLMWrapper(ChatOllama(model=OLLAMA_MODEL))
+
+from openai import AsyncOpenAI
+from ragas.llms import llm_factory
+from ragas.metrics.collections import Faithfulness
+
+from app.config import RAGAS_JUDGE_MODEL, OLLAMA_OPENAI_BASE_URL
+
+
+# points the client at local Ollama, not OpenAI's servers
+_client = AsyncOpenAI(base_url=OLLAMA_OPENAI_BASE_URL, api_key="ollama")
+# wraps our local model as a ragas-compatible judge
+_judge_llm = llm_factory(RAGAS_JUDGE_MODEL, provider="openai", client=_client)
+# the scorer object, created once at import time
 _faithfulness = Faithfulness(llm=_judge_llm)
 
 
 async def score_faithfulness(question: str, contexts: list[str], answer: str) -> float:
     """Score how well `answer`'s claims are supported by `contexts` (0-1, higher = more faithful)."""
-    sample = SingleTurnSample(
+    # asks the judge model to score this question/answer/context
+    result = await _faithfulness.ascore(
+        # the original question
         user_input=question,
+        # the answer our chat model generated
         response=answer,
+        # the chunks retrieved from Qdrant
         retrieved_contexts=contexts,
     )
-    return await _faithfulness.single_turn_ascore(sample)
+    # pulls just the numeric score (0-1) out of the result object
+    return result.value
