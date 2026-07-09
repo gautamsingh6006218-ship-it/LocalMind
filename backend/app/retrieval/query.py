@@ -1,3 +1,4 @@
+import sys
 from app.embeddings.embedder import embed_text
 from app.retrieval.retriever import search
 from app.llm.ollama_client import generate_answer
@@ -6,7 +7,7 @@ from app.llm.ollama_client import generate_answer
 # now reuses the same modules the /chat API endpoint uses, instead of
 # duplicating the embedding/search/generation logic here.
 
-question = "What is the best ways to distribute wealth?"
+question = sys.argv[1] if len(sys.argv) > 1 else "What is the best ways to distribute wealth?"
 
 query_vector = embed_text(question)
 matches = search(query_vector, limit=3)
