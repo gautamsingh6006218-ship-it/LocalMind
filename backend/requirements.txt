@@ -8,3 +8,5 @@ uvicorn
 pytest
 langfuse
 python-dotenv
+ragas
+langchain-ollama

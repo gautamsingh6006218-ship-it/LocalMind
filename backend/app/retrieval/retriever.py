@@ -1,11 +1,12 @@
 from qdrant_client import QdrantClient
 from langfuse import observe
 
-COLLECTION_NAME = "localmind"
+from app.config import QDRANT_URL, QDRANT_COLLECTION
 
 # Connects once at import time, reused across calls - same reasoning as the
 # embedding model: setting up a fresh connection on every request is wasteful.
-_client = QdrantClient("http://localhost:6333")
+_client = QdrantClient(QDRANT_URL)
+
 
 @observe()
 def search(query_vector: list[float], limit: int = 3) -> list[dict]:
@@ -13,7 +14,7 @@ def search(query_vector: list[float], limit: int = 3) -> list[dict]:
     # Sends query_vector to Qdrant, which compares it against all stored vectors
     # using Cosine similarity (as configured when the collection was created).
     results = _client.query_points(
-        collection_name=COLLECTION_NAME,
+        collection_name=QDRANT_COLLECTION,
         query=query_vector,
         limit=limit,
     )

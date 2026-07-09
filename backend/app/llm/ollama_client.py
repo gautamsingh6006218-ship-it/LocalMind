@@ -1,6 +1,9 @@
 import ollama
 from langfuse import observe
 
+from app.config import OLLAMA_MODEL, OLLAMA_TEMPERATURE
+
+
 @observe()
 def generate_answer(question: str, context: str) -> str:
     """Ask the local Llama model to answer `question`, grounded only in `context`."""
@@ -16,8 +19,9 @@ def generate_answer(question: str, context: str) -> str:
     # Sends the prompt to the Ollama container and waits for the full response
     # (not streamed - the whole answer comes back in one call).
     response = ollama.chat(
-        model="llama3.2:3b",
+        model=OLLAMA_MODEL,
         messages=[{"role": "user", "content": prompt}],
+        options={"temperature": OLLAMA_TEMPERATURE},
     )
 
     return response["message"]["content"]

@@ -4,8 +4,8 @@ from sentence_transformers import SentenceTransformer
 from qdrant_client import QdrantClient
 from qdrant_client.models import Distance, VectorParams, PointStruct
 
+from app.config import QDRANT_URL, QDRANT_COLLECTION, EMBEDDING_MODEL
 
-COLLECTION_NAME = "localmind"
 chunk_size = 500
 
 
@@ -21,19 +21,19 @@ def main():
     text = file_path.read_text()
     chunks = chunk_text(text)
 
-    # Loads Qwen3-Embedding-0.6B (downloads it on first run) and converts
-    # each chunk of text into a 1024-dimensional vector.
-    model = SentenceTransformer("Qwen/Qwen3-Embedding-0.6B")
+    # Loads the configured embedding model (downloads it on first run) and converts
+    # each chunk of text into a vector.
+    model = SentenceTransformer(EMBEDDING_MODEL)
     embeddings = model.encode(chunks)
 
-    # Connects to the Qdrant container we started via docker-compose (port 6333).
-    client = QdrantClient("http://localhost:6333")
+    # Connects to the Qdrant container we started via docker-compose.
+    client = QdrantClient(QDRANT_URL)
 
     # Only create the collection (Qdrant's version of a "table") if it doesn't exist yet -
     # otherwise re-running this script would error trying to recreate it.
-    if not client.collection_exists(COLLECTION_NAME):
+    if not client.collection_exists(QDRANT_COLLECTION):
         client.create_collection(
-            collection_name=COLLECTION_NAME,
+            collection_name=QDRANT_COLLECTION,
             # size must match the embedding model's output dimension (1024 here)
             vectors_config=VectorParams(size=embeddings.shape[1], distance=Distance.COSINE),
         )
@@ -46,7 +46,7 @@ def main():
     ]
 
     # Writes (or overwrites, since IDs are reused on rerun) all points into Qdrant in one call.
-    client.upsert(collection_name=COLLECTION_NAME, points=points)
+    client.upsert(collection_name=QDRANT_COLLECTION, points=points)
     print(f"Inserted {len(chunks)} chunks from {file_path.name}")
 
 
